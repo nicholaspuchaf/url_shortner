@@ -1,0 +1,7 @@
+pre-commit:
+  jobs:
+    - name: codecheck
+      run: pnpm codecheck
+
+    - name: linter
+      run: pnpm lint .
