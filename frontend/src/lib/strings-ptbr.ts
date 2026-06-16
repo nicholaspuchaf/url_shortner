@@ -33,6 +33,8 @@ export const stringsPtBr = {
   shortenerCard: {
     shortenerTab: 'Encurtar link',
     qrTab: 'Gerar QR Code',
+    shortenerTitle: 'Encurtar link',
+    qrTitle: 'Gerar QR Code',
     longUrlLabel: 'URL longa',
     longUrlPlaceholder: 'Cole a URL longa aqui',
     domainLabel: 'Domínio',
@@ -43,6 +45,11 @@ export const stringsPtBr = {
     submit: 'Encurtar link',
     disclaimer:
       'Ao clicar em Encurtar link, você concorda com nossos Termos de Serviço, Política de Privacidade e Uso de Cookies.',
+    qrDescription:
+      'Crie um QR Code a partir de qualquer link e compartilhe em materiais impressos, embalagens ou campanhas.',
+    qrPreviewLabel: 'Pré-visualização',
+    qrPreviewHint: 'O QR Code será gerado com a identidade do seu domínio.',
+    qrSubmit: 'Gerar QR Code',
   },
   recentLinks: {
     title: 'Seus links recentes:',
