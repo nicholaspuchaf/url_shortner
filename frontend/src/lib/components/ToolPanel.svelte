@@ -1,9 +1,12 @@
 <script lang="ts">
   import { shortenLink } from '../api'
+  import type { ShortenLinkResponse } from '../api'
+  import type { GeneratedLink } from '../generated-link'
   import type { AppMessages } from '../i18n'
 
   export let accessibility: AppMessages['accessibility']
   export let shortenerCard: AppMessages['shortenerCard']
+  export let onLinkGenerated: (link: GeneratedLink) => void = () => {}
 
   $: tabs = [
     { label: shortenerCard.shortenerTab, mode: 'shortener', icon: 'link' },
@@ -16,6 +19,10 @@
   let errorMessage = ''
   let successShortUrl = ''
   let copyMessage = ''
+
+  function saveGeneratedLink(link: ShortenLinkResponse) {
+    onLinkGenerated({ ...link, createdAt: new Date().toISOString() })
+  }
 
   async function handleAction() {
     errorMessage = ''
@@ -38,6 +45,7 @@
     try {
       const result = await shortenLink({ url: value })
       successShortUrl = result.shortUrl
+      saveGeneratedLink(result)
       longUrl = ''
     } catch (error) {
       errorMessage = `${shortenerCard.errorPrefix} ${(error as Error).message}`
@@ -167,5 +175,6 @@
         {/if}
       </div>
     {/if}
+
   </form>
 </section>

@@ -67,6 +67,7 @@ export const stringsEn = {
     copyFailed: 'Could not copy the short URL.',
     errorPrefix: 'Could not shorten the link:',
     requiredUrl: 'Enter a valid URL to continue.',
+    generatedLinksTitle: 'Generated links',
   },
   recentLinks: {
     title: 'Your recent links:',
@@ -95,6 +96,21 @@ export const stringsEn = {
       'We use cookies to improve your experience, analyze traffic and enhance our services. Read our Cookie Policy to learn more.',
     necessary: 'Allow necessary only',
     all: 'Allow all cookies',
+    save: 'Save preferences',
+    categories: {
+      necessary: {
+        label: 'Necessary',
+        description: 'Keep the site working and cannot be disabled.',
+      },
+      analytics: {
+        label: 'Analytics',
+        description: 'Help us understand site usage to improve the experience.',
+      },
+      marketing: {
+        label: 'Marketing',
+        description: 'Allow personalized communications and campaigns.',
+      },
+    },
   },
   footer: {
     name: 'Nicholas Pucharelli',

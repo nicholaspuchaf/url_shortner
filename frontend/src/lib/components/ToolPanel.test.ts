@@ -4,6 +4,7 @@ import ToolPanel from './ToolPanel.svelte';
 import { stringsPtBr } from '../strings-ptbr';
 
 afterEach(() => {
+  localStorage.clear();
   vi.unstubAllGlobals();
 });
 
@@ -66,10 +67,47 @@ describe('ToolPanel', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    expect(await screen.findByRole('link', { name: 'http://localhost:3000/abc1234' })).toHaveAttribute(
+    const generatedLinks = await screen.findAllByRole('link', { name: 'http://localhost:3000/abc1234' });
+    expect(generatedLinks[0]).toHaveAttribute(
       'href',
       'http://localhost:3000/abc1234',
     );
+  });
+
+  it('notifies when a link is generated', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        code: 'abc1234',
+        url: 'https://example.com',
+        shortUrl: 'http://localhost:3000/abc1234',
+      }),
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+    const onLinkGenerated = vi.fn();
+
+    render(ToolPanel, {
+      props: {
+        accessibility: stringsPtBr.accessibility,
+        shortenerCard: stringsPtBr.shortenerCard,
+        onLinkGenerated,
+      },
+    });
+
+    const urlInput = screen.getByPlaceholderText(stringsPtBr.shortenerCard.longUrlPlaceholder);
+    await fireEvent.input(urlInput, { target: { value: 'https://example.com' } });
+    await fireEvent.click(screen.getByRole('button', { name: stringsPtBr.shortenerCard.submit }));
+
+    await screen.findAllByRole('link', { name: 'http://localhost:3000/abc1234' });
+
+    expect(onLinkGenerated).toHaveBeenCalledTimes(1);
+    expect(onLinkGenerated).toHaveBeenCalledWith(expect.objectContaining({
+      code: 'abc1234',
+      url: 'https://example.com',
+      shortUrl: 'http://localhost:3000/abc1234',
+      createdAt: expect.any(String),
+    }));
   });
 
   it('copies the generated short url', async () => {
@@ -97,7 +135,7 @@ describe('ToolPanel', () => {
     await fireEvent.input(urlInput, { target: { value: 'https://example.com' } });
     await fireEvent.click(screen.getByRole('button', { name: stringsPtBr.shortenerCard.submit }));
 
-    await screen.findByRole('link', { name: 'http://localhost:3000/abc1234' });
+    await screen.findAllByRole('link', { name: 'http://localhost:3000/abc1234' });
     await fireEvent.click(screen.getByRole('button', { name: stringsPtBr.shortenerCard.copyShortUrl }));
 
     expect(writeTextMock).toHaveBeenCalledWith('http://localhost:3000/abc1234');

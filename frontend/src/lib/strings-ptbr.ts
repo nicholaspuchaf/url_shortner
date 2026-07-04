@@ -60,6 +60,7 @@ export const stringsPtBr = {
     copyFailed: 'Não foi possível copiar a URL curta.',
     errorPrefix: 'Não foi possível encurtar o link:',
     requiredUrl: 'Informe uma URL válida para continuar.',
+    generatedLinksTitle: 'Links gerados',
   },
   recentLinks: {
     title: 'Seus links recentes:',
@@ -88,6 +89,21 @@ export const stringsPtBr = {
       'Usamos cookies para melhorar sua experiência, analisar tráfego e aprimorar nossos serviços. Leia nossa Política de Cookies para saber mais.',
     necessary: 'Permitir apenas os necessários',
     all: 'Permitir todos os cookies',
+    save: 'Salvar preferências',
+    categories: {
+      necessary: {
+        label: 'Necessários',
+        description: 'Mantêm o site funcionando e não podem ser desativados.',
+      },
+      analytics: {
+        label: 'Analytics',
+        description: 'Ajudam a entender o uso do site para melhorar a experiência.',
+      },
+      marketing: {
+        label: 'Marketing',
+        description: 'Permitem personalizar comunicações e campanhas.',
+      },
+    },
   },
   footer: {
     name: 'Nicholas Pucharelli',
