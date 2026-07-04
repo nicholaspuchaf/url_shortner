@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { shortenLink } from '../api'
   import type { StringsPtBr } from '../strings-ptbr'
 
   export let accessibility: StringsPtBr['accessibility']
@@ -10,6 +11,53 @@
   ] as const
 
   let currentTab: 'shortener' | 'qr' = 'shortener'
+  let longUrl = ''
+  let isSubmitting = false
+  let errorMessage = ''
+  let successShortUrl = ''
+  let copyMessage = ''
+
+  async function handleAction() {
+    errorMessage = ''
+    successShortUrl = ''
+    copyMessage = ''
+
+    if (currentTab === 'qr') {
+      return
+    }
+
+    const value = longUrl.trim()
+
+    if (!value) {
+      errorMessage = shortenerCard.requiredUrl
+      return
+    }
+
+    isSubmitting = true
+
+    try {
+      const result = await shortenLink({ url: value })
+      successShortUrl = result.shortUrl
+      longUrl = ''
+    } catch (error) {
+      errorMessage = `${shortenerCard.errorPrefix} ${(error as Error).message}`
+    } finally {
+      isSubmitting = false
+    }
+  }
+
+  async function handleCopy() {
+    if (!successShortUrl) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(successShortUrl)
+      copyMessage = shortenerCard.copiedShortUrl
+    } catch {
+      copyMessage = shortenerCard.copyFailed
+    }
+  }
 </script>
 
 <section class="tool-panel" aria-label={accessibility.toolPanel}>
@@ -64,7 +112,7 @@
 
     <label>
       <span>{shortenerCard.longUrlLabel} *</span>
-      <input type="url" placeholder={shortenerCard.longUrlPlaceholder} />
+      <input bind:value={longUrl} type="url" placeholder={shortenerCard.longUrlPlaceholder} />
     </label>
 
     <div class="split-fields">
@@ -87,20 +135,37 @@
       </label>
     </div>
 
-    <button type="button" class="submit-button">
+    <button type="button" class="submit-button" disabled={isSubmitting} onclick={handleAction}>
       {#if currentTab === 'qr'}
         {shortenerCard.qrSubmit}
       {:else}
-        {shortenerCard.submit}
+        {isSubmitting ? shortenerCard.loading : shortenerCard.submit}
       {/if}
     </button>
 
-    <p class="disclaimer">
-      {#if currentTab === 'qr'}
-        {shortenerCard.qrPreviewHint}
-      {:else}
-        {shortenerCard.disclaimer}
-      {/if}
-    </p>
+    {#if currentTab === 'shortener'}
+      <p class="disclaimer">{shortenerCard.disclaimer}</p>
+    {:else}
+      <p class="disclaimer">{shortenerCard.qrPreviewHint}</p>
+    {/if}
+
+    {#if errorMessage}
+      <p class="result-message error" role="alert">{errorMessage}</p>
+    {/if}
+
+    {#if successShortUrl}
+      <div class="result-box" aria-live="polite">
+        <strong>{shortenerCard.resultTitle}</strong>
+        <span>{shortenerCard.resultShortUrlLabel}</span>
+        <a href={successShortUrl} target="_blank" rel="noreferrer">{successShortUrl}</a>
+        <div class="result-actions">
+          <small>{shortenerCard.resultCopyHint}</small>
+          <button type="button" class="copy-button" onclick={handleCopy}>{shortenerCard.copyShortUrl}</button>
+        </div>
+        {#if copyMessage}
+          <small class="copy-feedback">{copyMessage}</small>
+        {/if}
+      </div>
+    {/if}
   </form>
 </section>

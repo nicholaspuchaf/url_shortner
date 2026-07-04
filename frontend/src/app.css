@@ -440,12 +440,74 @@ h1 {
   background: #2a7d3f;
 }
 
+.submit-button:disabled {
+  cursor: wait;
+  opacity: 0.88;
+}
+
 .disclaimer {
   margin: -2px 0 0;
   font-size: 0.74rem;
   line-height: 1.4;
   color: #65707e;
   font-style: italic;
+}
+
+.result-message {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 4px;
+  background: #fff4f2;
+  color: #9f2b20;
+  border: 1px solid #f3c1bb;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.result-box {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: #eef9f2;
+  border: 1px solid #bfe2c9;
+}
+
+.result-box strong,
+.result-box span,
+.result-box small,
+.result-box a {
+  color: #12402a;
+}
+
+.result-box a {
+  word-break: break-all;
+  font-weight: 700;
+}
+
+.result-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.copy-button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 4px;
+  background: #dfeee5;
+  color: #12402a;
+  font-weight: 700;
+}
+
+.copy-button:hover {
+  background: #cde5d4;
+}
+
+.copy-feedback {
+  color: #12402a;
+  font-size: 0.82rem;
 }
 
 .recent-links {

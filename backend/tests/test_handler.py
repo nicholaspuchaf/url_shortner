@@ -103,6 +103,22 @@ class HandlerTests(unittest.TestCase):
 
         self.assertEqual(response["statusCode"], 302)
         self.assertEqual(response["headers"]["Location"], "https://example.com")
+        self.assertEqual(response["headers"]["Access-Control-Allow-Origin"], "*")
+
+    def test_options_returns_cors_headers(self):
+        handler = load_handler(FakeTable())
+
+        event = {
+            "requestContext": {"http": {"method": "OPTIONS"}, "domainName": "abc.lambda-url.us-east-1.on.aws"},
+            "rawPath": "/shorten",
+            "headers": {},
+        }
+
+        response = handler.lambda_handler(event, None)
+
+        self.assertEqual(response["statusCode"], 204)
+        self.assertEqual(response["headers"]["Access-Control-Allow-Origin"], "*")
+        self.assertIn("POST", response["headers"]["Access-Control-Allow-Methods"])
 
 
 if __name__ == "__main__":

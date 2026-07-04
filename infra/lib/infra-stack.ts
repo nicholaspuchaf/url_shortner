@@ -4,6 +4,7 @@ import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations
 import * as certmgr from "aws-cdk-lib/aws-certificatemanager";
 import * as dynamo from "aws-cdk-lib/aws-dynamodb";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as ssm from "aws-cdk-lib/aws-ssm";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as route53Targets from "aws-cdk-lib/aws-route53-targets";
 import { resolve } from "node:path";
@@ -14,6 +15,7 @@ export type InfraStage = "dev" | "prod";
 export interface InfraStackProps extends cdk.StackProps {
   stage: InfraStage;
   backendDir?: string;
+  frontendUrlParameterName?: string;
   customDomain?: {
     domainName: string;
     hostedZoneName: string;
@@ -39,6 +41,9 @@ export class InfraStack extends cdk.Stack {
 
     const backendDir = props.backendDir ?? resolve(__dirname, "../../backend");
     const isProd = props.stage === "prod";
+    const frontendUrlParameterName =
+      props.frontendUrlParameterName ?? `/url-shortner/${props.stage}/frontend-url`;
+    const frontendUrl = ssm.StringParameter.valueForStringParameter(this, frontendUrlParameterName);
 
     const linksTable = new dynamo.Table(this, "LinksTable", {
       partitionKey: {
@@ -61,6 +66,8 @@ export class InfraStack extends cdk.Stack {
       environment: {
         STAGE: props.stage,
         LINKS_TABLE_NAME: linksTable.tableName,
+        FRONTEND_URL: frontendUrl,
+        CORS_ORIGIN: frontendUrl,
       },
       architecture: lambda.Architecture.ARM_64,
     });
@@ -135,6 +142,10 @@ export class InfraStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, "ApiUrl", {
       value: httpApi.apiEndpoint,
+    });
+
+    new cdk.CfnOutput(this, "FrontendUrlParameterName", {
+      value: frontendUrlParameterName,
     });
   }
 }

@@ -6,7 +6,7 @@ export type EnvironmentConfig = {
 }
 
 export const environment: EnvironmentConfig = {
-  backendUrl: 'http://localhost:3000',
+  backendUrl: import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:3000',
   appName: 'TinyURL',
   appVersion: '0.0.0',
   supportEmail: 'support@tinyurl.com',

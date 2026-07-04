@@ -8,13 +8,22 @@ import boto3
 from botocore.exceptions import ClientError
 
 TABLE_NAME = os.environ["LINKS_TABLE_NAME"]
+CORS_ORIGIN = os.environ.get("CORS_ORIGIN", "*")
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(TABLE_NAME)
 
 
+def _cors_headers():
+    return {
+        "Access-Control-Allow-Origin": CORS_ORIGIN,
+        "Access-Control-Allow-Headers": "content-type",
+        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    }
+
+
 def _response(status_code, body=None, headers=None):
     payload = "" if body is None else json.dumps(body)
-    response_headers = {"content-type": "application/json"}
+    response_headers = {"content-type": "application/json", **_cors_headers()}
     if headers:
         response_headers.update(headers)
 
@@ -28,7 +37,7 @@ def _response(status_code, body=None, headers=None):
 def _redirect(location):
     return {
         "statusCode": 302,
-        "headers": {"Location": location},
+        "headers": {"Location": location, **_cors_headers()},
         "body": "",
     }
 
@@ -72,6 +81,13 @@ def lambda_handler(event, context):
     method = event["requestContext"]["http"]["method"].upper()
     raw_path = event.get("rawPath", "/")
     path = raw_path.lstrip("/")
+
+    if method == "OPTIONS":
+        return {
+            "statusCode": 204,
+            "headers": _cors_headers(),
+            "body": "",
+        }
 
     if method == "GET" and path and path != "shorten":
         code = path.split("/", 1)[0]

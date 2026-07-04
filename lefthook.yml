@@ -4,4 +4,10 @@ pre-commit:
       run: pnpm codecheck
 
     - name: linter
-      run: pnpm lint .
+      run: pnpm lint
+
+    - name: lint fix
+      run: pnpm lint:fix
+
+    - name: test frontend
+      run: cd frontend && pnpm test
