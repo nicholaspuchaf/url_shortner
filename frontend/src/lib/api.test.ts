@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { shortenLink } from './api';
+import environment from './environment';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -25,7 +26,7 @@ describe('shortenLink', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:3000/shorten',
+      `${environment.backendUrl.replace(/\/$/, '')}/shorten`,
       expect.objectContaining({
         method: 'POST',
         headers: { 'content-type': 'application/json' },

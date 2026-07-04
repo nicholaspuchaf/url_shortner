@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
+import { Match, Template } from 'aws-cdk-lib/assertions';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -22,6 +22,19 @@ test('frontend stack creates s3, cloudfront and ssm parameter', () => {
   template.resourceCountIs('AWS::S3::Bucket', 1);
   template.resourceCountIs('AWS::CloudFront::Distribution', 1);
   template.resourceCountIs('AWS::SSM::Parameter', 1);
+});
+
+test('frontend bucket is not versioned in prod', () => {
+  const app = new cdk.App();
+  const stack = new FrontendStack(app, 'FrontendProdStack', {
+    stage: 'prod',
+    frontendDir: makeFrontendDist(),
+  });
+  const template = Template.fromStack(stack);
+
+  template.hasResourceProperties('AWS::S3::Bucket', {
+    VersioningConfiguration: Match.absent(),
+  });
 });
 
 test('frontend stack can enable waf', () => {

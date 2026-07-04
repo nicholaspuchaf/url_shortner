@@ -1,7 +1,8 @@
 import json
 import hashlib
+import ipaddress
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
 import boto3
@@ -9,6 +10,10 @@ from botocore.exceptions import ClientError
 
 TABLE_NAME = os.environ["LINKS_TABLE_NAME"]
 CORS_ORIGIN = os.environ.get("CORS_ORIGIN", "*")
+MAX_URL_LENGTH = 2048
+LINK_TTL_DAYS = 30
+BLOCKED_HOSTS = {"localhost", "metadata.google.internal"}
+BLOCKED_SUFFIXES = (".localhost", ".local")
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(TABLE_NAME)
 
@@ -52,9 +57,40 @@ def _short_url(event, code):
     return f"{protocol}://{host}/{code}"
 
 
+def _has_control_characters(value):
+    return any(ord(character) < 32 or ord(character) == 127 for character in value)
+
+
 def _is_valid_url(value):
-    parsed = urlparse(value)
-    return bool(parsed.scheme and parsed.netloc)
+    if len(value) > MAX_URL_LENGTH or _has_control_characters(value):
+        return False
+
+    try:
+        parsed = urlparse(value)
+        hostname = parsed.hostname
+    except ValueError:
+        return False
+
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc or not hostname:
+        return False
+
+    hostname = hostname.rstrip(".").lower()
+    if hostname in BLOCKED_HOSTS or hostname.endswith(BLOCKED_SUFFIXES):
+        return False
+
+    try:
+        address = ipaddress.ip_address(hostname)
+    except ValueError:
+        return True
+
+    return not (
+        address.is_private
+        or address.is_loopback
+        or address.is_link_local
+        or address.is_multicast
+        or address.is_reserved
+        or address.is_unspecified
+    )
 
 
 def _save_link(url):
@@ -66,11 +102,13 @@ def _save_link(url):
             raise ValueError("Hash collision detected for a different URL")
         return code, False
 
+    now = datetime.now(timezone.utc)
     table.put_item(
         Item={
             "code": code,
             "url": url,
-            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "createdAt": now.isoformat(),
+            "expiresAt": int((now + timedelta(days=LINK_TTL_DAYS)).timestamp()),
         },
         ConditionExpression="attribute_not_exists(code)",
     )

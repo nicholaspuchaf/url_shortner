@@ -3,6 +3,7 @@ import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as certmgr from "aws-cdk-lib/aws-certificatemanager";
 import * as dynamo from "aws-cdk-lib/aws-dynamodb";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as ssm from "aws-cdk-lib/aws-ssm";
 import * as route53 from "aws-cdk-lib/aws-route53";
@@ -16,6 +17,11 @@ export interface InfraStackProps extends cdk.StackProps {
   stage: InfraStage;
   backendDir?: string;
   frontendUrlParameterName?: string;
+  apiThrottle?: {
+    rateLimit: number;
+    burstLimit: number;
+  };
+  reservedConcurrentExecutions?: number;
   customDomain?: {
     domainName: string;
     hostedZoneName: string;
@@ -44,6 +50,10 @@ export class InfraStack extends cdk.Stack {
     const frontendUrlParameterName =
       props.frontendUrlParameterName ?? `/url-shortner/${props.stage}/frontend-url`;
     const frontendUrl = ssm.StringParameter.valueForStringParameter(this, frontendUrlParameterName);
+    const apiThrottle = props.apiThrottle ?? {
+      rateLimit: 1,
+      burstLimit: 5,
+    };
 
     const linksTable = new dynamo.Table(this, "LinksTable", {
       partitionKey: {
@@ -55,6 +65,7 @@ export class InfraStack extends cdk.Stack {
       pointInTimeRecoverySpecification: {
         pointInTimeRecoveryEnabled: isProd,
       },
+      timeToLiveAttribute: "expiresAt",
     });
 
     const urlShortener = new lambda.Function(this, "UrlShortenerFunction", {
@@ -70,12 +81,29 @@ export class InfraStack extends cdk.Stack {
         CORS_ORIGIN: frontendUrl,
       },
       architecture: lambda.Architecture.ARM_64,
+      reservedConcurrentExecutions: props.reservedConcurrentExecutions ?? 2,
     });
 
-    linksTable.grantReadWriteData(urlShortener);
+    urlShortener.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["dynamodb:DescribeTable", "dynamodb:GetItem", "dynamodb:PutItem"],
+        resources: [linksTable.tableArn],
+      }),
+    );
 
     const httpApi = new apigwv2.HttpApi(this, "UrlShortenerApi", {
       apiName: "url-shortener",
+      createDefaultStage: false,
+      corsPreflight: {
+        allowHeaders: ["content-type"],
+        allowMethods: [
+          apigwv2.CorsHttpMethod.GET,
+          apigwv2.CorsHttpMethod.POST,
+          apigwv2.CorsHttpMethod.OPTIONS,
+        ],
+        allowOrigins: [frontendUrl],
+        maxAge: cdk.Duration.days(1),
+      },
     });
     const integration = new HttpLambdaIntegration("UrlShortenerIntegration", urlShortener);
 
@@ -85,7 +113,7 @@ export class InfraStack extends cdk.Stack {
       integration,
     });
 
-    httpApi.addRoutes({
+    const shortenRoutes = httpApi.addRoutes({
       path: "/shorten",
       methods: [apigwv2.HttpMethod.POST],
       integration,
@@ -96,6 +124,20 @@ export class InfraStack extends cdk.Stack {
       methods: [apigwv2.HttpMethod.GET],
       integration,
     });
+
+    const defaultStage = new apigwv2.HttpStage(this, "UrlShortenerDefaultStage", {
+      httpApi,
+      stageName: "$default",
+      autoDeploy: true,
+    });
+    const cfnDefaultStage = defaultStage.node.defaultChild as apigwv2.CfnStage;
+    cfnDefaultStage.addDependency(shortenRoutes[0].node.defaultChild as apigwv2.CfnRoute);
+    cfnDefaultStage.routeSettings = {
+      "POST /shorten": {
+        ThrottlingBurstLimit: apiThrottle.burstLimit,
+        ThrottlingRateLimit: apiThrottle.rateLimit,
+      },
+    };
 
     if (props.customDomain) {
       const hostedZone = new route53.PublicHostedZone(this, "HostedZone", {
@@ -115,7 +157,7 @@ export class InfraStack extends cdk.Stack {
       new apigwv2.ApiMapping(this, "ApiMapping", {
         api: httpApi,
         domainName,
-        stage: httpApi.defaultStage!,
+        stage: defaultStage,
       });
 
       const recordName = toRecordName(props.customDomain.domainName, props.customDomain.hostedZoneName);

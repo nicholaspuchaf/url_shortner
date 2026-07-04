@@ -46,6 +46,23 @@ O fluxo principal é:
 - O backend Python está em [`backend/`](./backend)
 - A stack principal está em [`infra/lib/infra-stack.ts`](./infra/lib/infra-stack.ts)
 
+## Deploy Do Frontend
+
+O frontend usa `VITE_BACKEND_URL` em tempo de build. Se essa variável não for informada, builds de produção falham para evitar publicar um bundle apontando para `http://localhost:3000`.
+
+Depois de criar ou atualizar a stack de infra, pegue o output `ApiUrl` e gere o build do frontend assim:
+
+```bash
+VITE_BACKEND_URL=https://SEU_API_ID.execute-api.REGION.amazonaws.com pnpm --dir frontend build
+pnpm --dir infra cdk deploy url-shortner-frontend-stack
+```
+
+Para um build local sem API real, use:
+
+```bash
+pnpm --dir frontend build:local
+```
+
 ## Estimativa De Custo
 
 Premissas usadas nesta estimativa:
@@ -101,4 +118,3 @@ Distribuição considerada:
 - Route 53 Pricing: https://aws.amazon.com/route53/pricing/
 - ACM Pricing: https://aws.amazon.com/certificate-manager/pricing/
 - CloudWatch Pricing: https://aws.amazon.com/cloudwatch/pricing/
-
