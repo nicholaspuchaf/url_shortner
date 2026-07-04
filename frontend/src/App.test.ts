@@ -17,6 +17,7 @@ describe('App', () => {
     expect(screen.getByRole('tab', { name: stringsPtBr.shortenerCard.shortenerTab })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: stringsPtBr.recentLinks.title })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: stringsPtBr.plansSection.heading })).toBeInTheDocument();
+    expect(screen.getByText(stringsPtBr.footer.email)).toBeInTheDocument();
   });
 
   it('switches the visible copy when the locale changes', async () => {

@@ -96,6 +96,18 @@ export const stringsEn = {
     necessary: 'Allow necessary only',
     all: 'Allow all cookies',
   },
+  footer: {
+    name: 'Nicholas Pucharelli',
+    email: 'nicholas.pucharelli@gmail.com',
+    location: 'Brazil',
+    emailLabel: 'Email Nicholas Pucharelli',
+    socialLabel: 'Footer social links',
+    linkedinLabel: 'Open Nicholas Pucharelli on LinkedIn',
+    githubLabel: 'Open Nicholas Pucharelli on GitHub',
+    linkedinUrl: 'https://www.linkedin.com/in/nicholas-pucharelli-fontanini-068377274',
+    githubUrl: 'https://github.com/nicholaspuchaf',
+    credit: 'Engineered in Svelte.',
+  },
   formSections: {
     urlType: 'Link type',
     freeBadge: 'Free',

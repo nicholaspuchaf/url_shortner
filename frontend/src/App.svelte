@@ -6,6 +6,7 @@
   import RecentLinksSection from './lib/components/RecentLinksSection.svelte'
   import PlansSection from './lib/components/PlansSection.svelte'
   import CookieBanner from './lib/components/CookieBanner.svelte'
+  import SiteFooter from './lib/components/SiteFooter.svelte'
 
   $: if (typeof document !== 'undefined') {
     document.documentElement.lang = $locale
@@ -34,5 +35,6 @@
 
   <RecentLinksSection recentLinks={$messages.recentLinks} />
   <PlansSection plansSection={$messages.plansSection} formSections={$messages.formSections} />
+  <SiteFooter footer={$messages.footer} />
   <CookieBanner cookieConsent={$messages.cookieConsent} accessibility={$messages.accessibility} />
 </div>

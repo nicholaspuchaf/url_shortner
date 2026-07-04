@@ -89,6 +89,18 @@ export const stringsPtBr = {
     necessary: 'Permitir apenas os necessários',
     all: 'Permitir todos os cookies',
   },
+  footer: {
+    name: 'Nicholas Pucharelli',
+    email: 'nicholas.pucharelli@gmail.com',
+    location: 'Brasil',
+    emailLabel: 'Enviar email para Nicholas Pucharelli',
+    socialLabel: 'Links sociais do rodapé',
+    linkedinLabel: 'Abrir LinkedIn de Nicholas Pucharelli',
+    githubLabel: 'Abrir GitHub de Nicholas Pucharelli',
+    linkedinUrl: 'https://www.linkedin.com/in/nicholas-pucharelli-fontanini-068377274',
+    githubUrl: 'https://github.com/nicholaspuchaf',
+    credit: 'Engineered in Svelte.',
+  },
   formSections: {
     urlType: 'Tipo de link',
     freeBadge: 'Grátis',
