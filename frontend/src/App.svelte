@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { stringsPtBr } from './lib/strings-ptbr'
+  import { locale, localeOptions, messages, setLocale } from './lib/i18n'
   import TopBar from './lib/components/TopBar.svelte'
   import HeroSection from './lib/components/HeroSection.svelte'
   import ToolPanel from './lib/components/ToolPanel.svelte'
@@ -7,35 +7,32 @@
   import PlansSection from './lib/components/PlansSection.svelte'
   import CookieBanner from './lib/components/CookieBanner.svelte'
 
-  const {
-    meta,
-    brand,
-    accessibility,
-    navigation,
-    hero,
-    shortenerCard,
-    recentLinks,
-    plansSection,
-    cookieConsent,
-    formSections,
-    metrics,
-  } = stringsPtBr
+  $: if (typeof document !== 'undefined') {
+    document.documentElement.lang = $locale
+  }
 </script>
 
 <svelte:head>
-  <title>{meta.title}</title>
-  <meta name="description" content={meta.description} />
+  <title>{$messages.meta.title}</title>
+  <meta name="description" content={$messages.meta.description} />
 </svelte:head>
 
 <div class="page-shell">
-  <TopBar {brand} {accessibility} {navigation} />
+  <TopBar
+    brand={$messages.brand}
+    accessibility={$messages.accessibility}
+    navigation={$messages.navigation}
+    currentLocale={$locale}
+    {localeOptions}
+    onLocaleChange={setLocale}
+  />
 
   <main class="hero-layout">
-    <HeroSection {accessibility} {hero} {metrics} />
-    <ToolPanel {accessibility} {shortenerCard} />
+    <HeroSection accessibility={$messages.accessibility} hero={$messages.hero} metrics={$messages.metrics} />
+    <ToolPanel accessibility={$messages.accessibility} shortenerCard={$messages.shortenerCard} />
   </main>
 
-  <RecentLinksSection {recentLinks} />
-  <PlansSection {plansSection} {formSections} />
-  <CookieBanner {cookieConsent} {accessibility} />
+  <RecentLinksSection recentLinks={$messages.recentLinks} />
+  <PlansSection plansSection={$messages.plansSection} formSections={$messages.formSections} />
+  <CookieBanner cookieConsent={$messages.cookieConsent} accessibility={$messages.accessibility} />
 </div>

@@ -1,9 +1,16 @@
 <script lang="ts">
-  import type { StringsPtBr } from '../strings-ptbr'
+  import type { AppMessages, Locale, LocaleOption } from '../i18n'
 
-  export let brand: StringsPtBr['brand']
-  export let accessibility: StringsPtBr['accessibility']
-  export let navigation: StringsPtBr['navigation']
+  export let brand: AppMessages['brand']
+  export let accessibility: AppMessages['accessibility']
+  export let navigation: AppMessages['navigation']
+  export let currentLocale: Locale
+  export let localeOptions: readonly LocaleOption[]
+  export let onLocaleChange: (locale: Locale) => void
+
+  function handleLocaleChange(event: Event) {
+    onLocaleChange((event.currentTarget as HTMLSelectElement).value as Locale)
+  }
 </script>
 
 <header class="topbar">
@@ -17,6 +24,14 @@
   </nav>
 
   <div class="auth">
+    <label class="locale-select">
+      <span class="sr-only">{accessibility.languageSelector}</span>
+      <select value={currentLocale} onchange={handleLocaleChange} aria-label={accessibility.languageSelector}>
+        {#each localeOptions as option}
+          <option value={option.value}>{option.label}</option>
+        {/each}
+      </select>
+    </label>
     <a href="#login" class="auth-link">{navigation.login}</a>
     <a href="#signup" class="auth-button">{navigation.signUp}</a>
   </div>

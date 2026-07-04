@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { StringsPtBr } from '../strings-ptbr'
+  import type { AppMessages } from '../i18n'
 
-  export let accessibility: StringsPtBr['accessibility']
-  export let hero: StringsPtBr['hero']
-  export let metrics: StringsPtBr['metrics']
+  export let accessibility: AppMessages['accessibility']
+  export let hero: AppMessages['hero']
+  export let metrics: AppMessages['metrics']
 </script>
 
 <section class="hero-copy" aria-labelledby="hero-title">

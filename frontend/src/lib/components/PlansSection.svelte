@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { StringsPtBr } from '../strings-ptbr'
+  import type { AppMessages } from '../i18n'
 
-  export let plansSection: StringsPtBr['plansSection']
-  export let formSections: StringsPtBr['formSections']
+  export let plansSection: AppMessages['plansSection']
+  export let formSections: AppMessages['formSections']
 </script>
 
 <section class="plans" id="plans" aria-labelledby="plans-title">

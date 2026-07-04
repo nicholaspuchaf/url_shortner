@@ -9,6 +9,7 @@ export const stringsPtBr = {
     mainNavigation: 'Navegação principal',
     toolPanel: 'Ferramenta de encurtamento',
     mainMetrics: 'Indicadores principais',
+    languageSelector: 'Idioma',
     closeCookieBanner: 'Fechar aviso de cookies',
   },
   navigation: {

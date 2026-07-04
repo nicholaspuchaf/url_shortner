@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { StringsPtBr } from '../strings-ptbr'
+  import type { AppMessages } from '../i18n'
 
-  export let cookieConsent: StringsPtBr['cookieConsent']
-  export let accessibility: StringsPtBr['accessibility']
+  export let cookieConsent: AppMessages['cookieConsent']
+  export let accessibility: AppMessages['accessibility']
 </script>
 
 <div class="cookie-banner" aria-label={cookieConsent.title}>

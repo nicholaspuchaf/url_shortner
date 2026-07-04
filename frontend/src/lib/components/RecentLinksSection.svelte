@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { StringsPtBr } from '../strings-ptbr'
+  import type { AppMessages } from '../i18n'
 
-  export let recentLinks: StringsPtBr['recentLinks']
+  export let recentLinks: AppMessages['recentLinks']
 </script>
 
 <section class="recent-links" id="resources" aria-labelledby="recent-links-title">

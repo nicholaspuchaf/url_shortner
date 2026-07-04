@@ -1,11 +1,11 @@
 <script lang="ts">
   import { shortenLink } from '../api'
-  import type { StringsPtBr } from '../strings-ptbr'
+  import type { AppMessages } from '../i18n'
 
-  export let accessibility: StringsPtBr['accessibility']
-  export let shortenerCard: StringsPtBr['shortenerCard']
+  export let accessibility: AppMessages['accessibility']
+  export let shortenerCard: AppMessages['shortenerCard']
 
-  const tabs = [
+  $: tabs = [
     { label: shortenerCard.shortenerTab, mode: 'shortener', icon: 'link' },
     { label: shortenerCard.qrTab, mode: 'qr', icon: 'qr' },
   ] as const
