@@ -86,6 +86,25 @@ class HandlerTests(unittest.TestCase):
         self.assertEqual(json.loads(response["body"])["code"], code)
         self.assertEqual(fake_table.put_item.call_count, 0)
 
+    def test_post_shorten_normalizes_url_without_scheme(self):
+        fake_table = FakeTable()
+        handler = load_handler(fake_table)
+
+        event = {
+            "requestContext": {"http": {"method": "POST"}, "domainName": "abc.lambda-url.us-east-1.on.aws"},
+            "rawPath": "/shorten",
+            "headers": {"x-forwarded-proto": "https"},
+            "body": json.dumps({"url": "google.com"}),
+        }
+
+        response = handler.lambda_handler(event, None)
+        body = json.loads(response["body"])
+        saved_item = fake_table.items[body["code"]]
+
+        self.assertEqual(response["statusCode"], 201)
+        self.assertEqual(body["url"], "https://google.com")
+        self.assertEqual(saved_item["url"], "https://google.com")
+
     def test_post_shorten_sets_expiration_30_days_ahead(self):
         fake_table = FakeTable()
         handler = load_handler(fake_table)
@@ -154,11 +173,43 @@ class HandlerTests(unittest.TestCase):
         self.assertFalse(handler._is_valid_url("http://192.168.1.1"))
         self.assertFalse(handler._is_valid_url("http://169.254.169.254/latest/meta-data"))
 
+    def test_rejects_dangerous_url_formats(self):
+        handler = load_handler(FakeTable())
+
+        self.assertFalse(handler._is_valid_url("//google.com"))
+        self.assertFalse(handler._is_valid_url("https://google.com@evil.test"))
+        self.assertFalse(handler._is_valid_url("https://google.com:password@evil.test"))
+        self.assertFalse(handler._is_valid_url("http://127.1"))
+        self.assertFalse(handler._is_valid_url("http://127.0.1"))
+        self.assertFalse(handler._is_valid_url("http://0177.0.0.1"))
+        self.assertFalse(handler._is_valid_url("https://-google.com"))
+        self.assertFalse(handler._is_valid_url("https://google-.com"))
+        self.assertFalse(handler._is_valid_url("https://google..com"))
+
+    def test_rejects_xss_url_inputs(self):
+        handler = load_handler(FakeTable())
+
+        self.assertFalse(handler._is_valid_url("javascript:alert(1)"))
+        self.assertFalse(handler._is_valid_url("data:text/html,<script>alert(1)</script>"))
+        self.assertFalse(handler._is_valid_url("https://example.com/<script>alert(1)</script>"))
+        self.assertFalse(handler._is_valid_url("https://example.com/?q=<img src=x onerror=alert(1)>"))
+        self.assertFalse(handler._is_valid_url("https://example.com/?q=\" onmouseover=\"alert(1)"))
+        self.assertFalse(handler._is_valid_url("https://example.com/?q='><svg onload=alert(1)>"))
+
     def test_accepts_public_http_and_https_urls(self):
         handler = load_handler(FakeTable())
 
         self.assertTrue(handler._is_valid_url("https://example.com/docs"))
         self.assertTrue(handler._is_valid_url("http://example.com/path?utm_source=cv"))
+        self.assertTrue(handler._is_valid_url("https://google.com"))
+        self.assertTrue(handler._is_valid_url("https://www.google.com"))
+
+    def test_accepts_public_urls_without_scheme(self):
+        handler = load_handler(FakeTable())
+
+        self.assertTrue(handler._is_valid_url("google.com"))
+        self.assertTrue(handler._is_valid_url("www.google.com"))
+        self.assertTrue(handler._is_valid_url("google.com/"))
 
     def test_rejects_urls_longer_than_limit(self):
         handler = load_handler(FakeTable())

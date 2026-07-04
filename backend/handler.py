@@ -2,6 +2,7 @@ import json
 import hashlib
 import ipaddress
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
@@ -14,6 +15,8 @@ MAX_URL_LENGTH = 2048
 LINK_TTL_DAYS = 30
 BLOCKED_HOSTS = {"localhost", "metadata.google.internal"}
 BLOCKED_SUFFIXES = (".localhost", ".local")
+BLOCKED_URL_CHARACTERS = frozenset("<>\"'`{}")
+HOSTNAME_LABEL_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(TABLE_NAME)
 
@@ -61,17 +64,51 @@ def _has_control_characters(value):
     return any(ord(character) < 32 or ord(character) == 127 for character in value)
 
 
+def _has_blocked_url_characters(value):
+    return any(character in BLOCKED_URL_CHARACTERS for character in value)
+
+
+def _parse_url(value):
+    parsed = urlparse(value)
+    if parsed.scheme:
+        return parsed
+
+    return urlparse(f"https://{value}")
+
+
+def _normalize_url(value):
+    parsed = urlparse(value)
+    if parsed.scheme:
+        return value
+
+    return f"https://{value}"
+
+
+def _is_valid_hostname(hostname):
+    if "." not in hostname:
+        return False
+
+    if all(character.isdigit() or character == "." for character in hostname):
+        return False
+
+    labels = hostname.split(".")
+    return all(HOSTNAME_LABEL_PATTERN.match(label) for label in labels)
+
+
 def _is_valid_url(value):
-    if len(value) > MAX_URL_LENGTH or _has_control_characters(value):
+    if len(value) > MAX_URL_LENGTH or _has_control_characters(value) or _has_blocked_url_characters(value):
         return False
 
     try:
-        parsed = urlparse(value)
+        parsed = _parse_url(value)
         hostname = parsed.hostname
     except ValueError:
         return False
 
     if parsed.scheme not in {"http", "https"} or not parsed.netloc or not hostname:
+        return False
+
+    if parsed.username or parsed.password:
         return False
 
     hostname = hostname.rstrip(".").lower()
@@ -81,7 +118,7 @@ def _is_valid_url(value):
     try:
         address = ipaddress.ip_address(hostname)
     except ValueError:
-        return True
+        return _is_valid_hostname(hostname)
 
     return not (
         address.is_private
@@ -152,6 +189,8 @@ def lambda_handler(event, context):
 
         if not _is_valid_url(url):
             return _response(400, {"message": "Field 'url' must be a valid URL"})
+
+        url = _normalize_url(url)
 
         try:
             code, created = _save_link(url)

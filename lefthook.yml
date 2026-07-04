@@ -8,3 +8,6 @@ pre-commit:
 
     - name: test frontend
       run: cd frontend && pnpm test
+
+    - name: test backend
+      run: cd backend && python3 -m unittest tests/test_handler.py

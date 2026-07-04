@@ -90,6 +90,12 @@ export class FrontendStack extends cdk.Stack {
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ['/*'],
+      prune: true,
+      cacheControl: [
+        s3deploy.CacheControl.noCache(),
+        s3deploy.CacheControl.noStore(),
+        s3deploy.CacheControl.mustRevalidate(),
+      ],
     });
 
     new cdk.CfnOutput(this, 'FrontendDistributionUrl', {
