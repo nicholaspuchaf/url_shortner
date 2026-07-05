@@ -523,6 +523,17 @@ h1 {
   font-weight: 700;
 }
 
+.qr-preview {
+  width: min(190px, 100%);
+  aspect-ratio: 1;
+  justify-self: center;
+  box-sizing: border-box;
+  margin: 4px 0 6px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .result-actions {
   display: flex;
   align-items: center;

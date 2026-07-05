@@ -2,6 +2,14 @@ import environment from './environment';
 
 const backendBaseUrl = environment.backendUrl.replace(/\/$/, '');
 
+export function getBackendDomain() {
+  try {
+    return new URL(backendBaseUrl).host;
+  } catch {
+    return backendBaseUrl.replace(/^https?:\/\//, '');
+  }
+}
+
 export type ShortenLinkInput = {
   url: string
 }

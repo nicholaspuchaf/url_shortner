@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { shortenLink } from '../api'
+  import QRCode from 'qrcode'
+  import { getBackendDomain, shortenLink } from '../api'
   import type { ShortenLinkResponse } from '../api'
   import type { GeneratedLink } from '../generated-link'
   import type { AppMessages } from '../i18n'
@@ -18,20 +19,34 @@
   let isSubmitting = false
   let errorMessage = ''
   let successShortUrl = ''
+  let qrCodeDataUrl = ''
+  let qrFallback = false
   let copyMessage = ''
+
+  const backendDomain = getBackendDomain()
 
   function saveGeneratedLink(link: ShortenLinkResponse) {
     onLinkGenerated({ ...link, createdAt: new Date().toISOString() })
   }
 
+  function generateQrCode(url: string) {
+    return QRCode.toDataURL(url, {
+      errorCorrectionLevel: 'M',
+      margin: 2,
+      scale: 8,
+      color: {
+        dark: '#111827',
+        light: '#ffffff',
+      },
+    })
+  }
+
   async function handleAction() {
     errorMessage = ''
     successShortUrl = ''
+    qrCodeDataUrl = ''
+    qrFallback = false
     copyMessage = ''
-
-    if (currentTab === 'qr') {
-      return
-    }
 
     const value = longUrl.trim()
 
@@ -46,8 +61,18 @@
       const result = await shortenLink({ url: value })
       successShortUrl = result.shortUrl
       saveGeneratedLink(result)
+      if (currentTab === 'qr') {
+        qrCodeDataUrl = await generateQrCode(result.shortUrl)
+      }
       longUrl = ''
     } catch (error) {
+      if (currentTab === 'qr') {
+        successShortUrl = value
+        qrCodeDataUrl = await generateQrCode(value)
+        qrFallback = true
+        longUrl = ''
+        return
+      }
       errorMessage = `${shortenerCard.errorPrefix} ${(error as Error).message}`
     } finally {
       isSubmitting = false
@@ -128,7 +153,7 @@
         <span>{shortenerCard.domainLabel}</span>
         <div class="select-like">
           <select id="domain-select" name="domain">
-            <option>{shortenerCard.domainValue}</option>
+            <option>{backendDomain}</option>
           </select>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -145,7 +170,7 @@
 
     <button type="button" class="submit-button" disabled={isSubmitting} onclick={handleAction}>
       {#if currentTab === 'qr'}
-        {shortenerCard.qrSubmit}
+        {isSubmitting ? shortenerCard.qrLoading : shortenerCard.qrSubmit}
       {:else}
         {isSubmitting ? shortenerCard.loading : shortenerCard.submit}
       {/if}
@@ -163,9 +188,15 @@
 
     {#if successShortUrl}
       <div class="result-box" aria-live="polite">
-        <strong>{shortenerCard.resultTitle}</strong>
-        <span>{shortenerCard.resultShortUrlLabel}</span>
+        <strong>{qrFallback ? shortenerCard.qrFallbackTitle : shortenerCard.resultTitle}</strong>
+        <span>{qrFallback ? shortenerCard.resultOriginalUrlLabel : shortenerCard.resultShortUrlLabel}</span>
+        {#if qrCodeDataUrl}
+          <img class="qr-preview" src={qrCodeDataUrl} alt={shortenerCard.qrPreviewAlt} />
+        {/if}
         <a href={successShortUrl} target="_blank" rel="noreferrer">{successShortUrl}</a>
+        {#if qrFallback}
+          <small>{shortenerCard.qrFallbackHint}</small>
+        {/if}
         <div class="result-actions">
           <small>{shortenerCard.resultCopyHint}</small>
           <button type="button" class="copy-button" onclick={handleCopy}>{shortenerCard.copyShortUrl}</button>
